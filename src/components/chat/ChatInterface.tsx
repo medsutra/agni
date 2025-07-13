@@ -1,41 +1,35 @@
-import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Trash2, FileText } from "lucide-react";
+import { useState, useRef } from "react";
+import { Send, Bot, User, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useChatHistory, useSendMessage, useClearChat } from "@/hooks/useChat";
-import { useReports } from "@/hooks/useReports";
+import { useSendMessage, useClearChat, useChatHistory } from "@/hooks/useChat";
 import { useToast } from "@/hooks/use-toast";
 import { ChatMessage } from "@/types";
-import { formatDistanceToNow } from "date-fns";
+import { addMinutes, formatDistanceToNow } from "date-fns";
+import { useUserId } from "@/hooks/useUserId";
+import { useParams } from "react-router";
+import Markdown from "react-markdown";
 
 export function ChatInterface() {
   const { toast } = useToast();
+  const { userId } = useUserId();
+  const { chatId } = useParams();
   const [message, setMessage] = useState("");
-  const [selectedReportId, setSelectedReportId] = useState<
-    string | undefined
-  >();
   const [isTyping, setIsTyping] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  const { data: reports } = useReports();
-  const { data: chatHistory, isLoading } = useChatHistory(selectedReportId);
-  const sendMessage = useSendMessage();
-  const clearChat = useClearChat();
-
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-    }
-  }, [chatHistory]);
+  const { data: chatHistory, isLoading } = useChatHistory({
+    chatId: chatId || "",
+  });
+  const sendMessage = useSendMessage({
+    userId: userId || "",
+    chatId: chatId || "",
+  });
+  const clearChat = useClearChat({
+    userId: userId || "",
+  });
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +56,7 @@ export function ChatInterface() {
 
   const handleClearChat = async () => {
     try {
-      await clearChat.mutateAsync(selectedReportId);
+      await clearChat.mutateAsync({});
       toast({
         title: "Chat cleared",
         description: "All messages have been cleared.",
@@ -81,29 +75,31 @@ export function ChatInterface() {
       <div
         key={msg.id}
         className={`flex ${
-          msg.sender === "user" ? "justify-end" : "justify-start"
+          msg.owner === "USER" ? "justify-end" : "justify-start"
         } mb-4 px-2 sm:px-0`}
       >
         <div
           className={`max-w-[85%] sm:max-w-xs lg:max-w-md px-3 sm:px-4 py-2 sm:py-3 rounded-lg ${
-            msg.sender === "user"
+            msg.owner === "USER"
               ? "bg-blue-600 text-white"
               : "bg-gray-100 text-gray-900"
           }`}
         >
           <div className="flex items-center space-x-2 mb-1 text-xs sm:text-sm">
-            {msg.sender === "user" ? (
+            {msg.owner === "USER" ? (
               <User className="h-4 w-4" />
             ) : (
               <Bot className="h-4 w-4" />
             )}
             <span className="text-xs opacity-70 hidden sm:inline">
-              {formatDistanceToNow(new Date(msg.timestamp), {
+              {formatDistanceToNow(addMinutes(new Date(msg.createdAt), 330), {
                 addSuffix: true,
               })}
             </span>
           </div>
-          <p className="text-sm leading-relaxed break-words">{msg.content}</p>
+          <p className="text-sm leading-relaxed break-words">
+            <Markdown>{msg.message}</Markdown>
+          </p>
         </div>
       </div>
     );
@@ -114,22 +110,6 @@ export function ChatInterface() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Chat Interface</h2>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:space-x-4">
-          <Select value={selectedReportId} onValueChange={setSelectedReportId}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Select a report" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="general">General Chat</SelectItem>
-              {reports?.map((report) => (
-                <SelectItem key={report.id} value={report.id}>
-                  <div className="flex items-center space-x-2">
-                    <FileText className="h-4 w-4" />
-                    <span className="truncate">{report.name}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
           <Button
             variant="outline"
             size="sm"
@@ -145,14 +125,7 @@ export function ChatInterface() {
 
       <Card className="flex-1 flex flex-col">
         <CardHeader className="pb-4">
-          <CardTitle className="text-base md:text-lg">
-            {selectedReportId
-              ? `Chat about: ${
-                  reports?.find((r) => r.id === selectedReportId)?.name ||
-                  "Selected Report"
-                }`
-              : "General Chat"}
-          </CardTitle>
+          <CardTitle>General Chat</CardTitle>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col">
           <ScrollArea className="flex-1 pr-2 md:pr-4" ref={scrollAreaRef}>
@@ -165,9 +138,8 @@ export function ChatInterface() {
                 <Bot className="h-12 w-12 mx-auto mb-4 text-gray-400" />
                 <p>No messages yet. Start a conversation!</p>
                 <p className="text-sm mt-2">
-                  {selectedReportId
-                    ? "Ask questions about the selected report."
-                    : "Ask general questions or select a report to get specific insights."}
+                  Ask general questions or select a report to get specific
+                  insights.
                 </p>
               </div>
             ) : (

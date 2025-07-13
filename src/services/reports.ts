@@ -2,20 +2,23 @@ import { apiClient } from "@/lib/api";
 import { Report, ApiResponse } from "@/types";
 
 export const reportsApi = {
-  getReports: async (): Promise<Report[]> => {
-    const response = await apiClient.get<ApiResponse<Report[]>>("/reports");
+  getReports: async ({ userId }: { userId: string }): Promise<Report[]> => {
+    const response = await apiClient.get<ApiResponse<Report[]>>(
+      `/report?user_id=${userId}`
+    );
     return response.data.data;
   },
 
   uploadReport: async (
     file: File,
+    userId: string,
     onProgress?: (progress: number) => void
   ): Promise<Report> => {
     const formData = new FormData();
     formData.append("uploaded_file", file);
 
     const response = await apiClient.post<ApiResponse<Report>>(
-      "/report/upload",
+      `/report/upload?user_id=${userId}`,
       formData,
       {
         headers: {
@@ -36,7 +39,7 @@ export const reportsApi = {
   },
 
   deleteReport: async (reportId: string): Promise<void> => {
-    await apiClient.delete(`/reports/${reportId}`);
+    await apiClient.delete(`/report/${reportId}`);
   },
 
   getReportById: async (reportId: string): Promise<Report> => {
@@ -46,9 +49,15 @@ export const reportsApi = {
     return response.data.data;
   },
 
-  searchReports: async (query: string): Promise<Report[]> => {
+  searchReports: async ({
+    query,
+    userId,
+  }: {
+    query: string;
+    userId: string;
+  }): Promise<Report[]> => {
     const response = await apiClient.get<ApiResponse<Report[]>>(
-      `/reports/search?q=${encodeURIComponent(query)}`
+      `/report/search?q=${encodeURIComponent(query)}&user_id=${userId}`
     );
     return response.data.data;
   },

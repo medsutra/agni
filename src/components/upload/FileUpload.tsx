@@ -8,12 +8,16 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useUploadReport } from "@/hooks/useReports";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useUserId } from "@/hooks/useUserId";
 
 interface FileUploadProps {}
 
 export function FileUpload({}: FileUploadProps) {
   const { toast } = useToast();
-  const uploadReport = useUploadReport();
+  const { userId } = useUserId();
+  const uploadReport = useUploadReport({
+    userId: userId || "",
+  });
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>(
     {}
   );

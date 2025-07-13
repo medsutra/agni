@@ -9,32 +9,24 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Link, useLocation } from "react-router";
 
-interface SidebarProps {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
-}
-
-export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  const handleTabChange = (tab: string) => {
-    onTabChange(tab);
-    if (window.innerWidth < 768) {
-      setIsMobileOpen(false);
-    }
-  };
+  const location = useLocation();
+
+  const activeTab = location.pathname.replaceAll("/", "");
 
   const navItems = [
-    { id: "reports", label: "Reports", icon: FileText },
+    { id: "", label: "Reports", icon: FileText },
     { id: "upload", label: "Upload", icon: Upload },
     { id: "chat", label: "Chat", icon: MessageCircle },
   ];
 
   return (
     <>
-      {/* Mobile Menu Button */}
       <Button
         variant="ghost"
         size="sm"
@@ -44,7 +36,6 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         <Menu className="h-5 w-5" />
       </Button>
 
-      {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
@@ -52,17 +43,13 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         />
       )}
 
-      {/* Sidebar */}
       <div
         className={cn(
           "flex flex-col bg-white border-r border-gray-200 transition-all duration-300 z-50",
-          // Mobile styles
           "fixed md:relative inset-y-0 left-0",
           isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
-          // Desktop styles
           "md:flex",
           isCollapsed ? "md:w-16" : "md:w-64",
-          // Mobile width
           "w-64"
         )}
       >
@@ -72,7 +59,6 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
               <h1 className="text-xl font-bold text-gray-900">ReportChat</h1>
             )}
             <div className="flex items-center space-x-2">
-              {/* Mobile close button */}
               <Button
                 variant="ghost"
                 size="sm"
@@ -81,7 +67,6 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              {/* Desktop collapse button */}
               <Button
                 variant="ghost"
                 size="sm"
@@ -97,28 +82,28 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             </div>
           </div>
         </div>
-
         <nav className="flex-1 p-4 space-y-2">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
-              <Button
-                key={item.id}
-                variant={activeTab === item.id ? "default" : "ghost"}
-                className={cn(
-                  "w-full justify-start",
-                  isCollapsed && !isMobileOpen && "md:justify-center md:px-2",
-                  activeTab === item.id
-                    ? "text-white"
-                    : "text-gray-900 hover:text-gray-900 hover:bg-gray-100"
-                )}
-                onClick={() => handleTabChange(item.id)}
-              >
-                <Icon className="h-4 w-4" />
-                {(!isCollapsed || isMobileOpen) && (
-                  <span className="ml-2">{item.label}</span>
-                )}
-              </Button>
+              <Link to={`/${item.id}`}>
+                <Button
+                  key={item.id}
+                  variant={activeTab === item.id ? "default" : "ghost"}
+                  className={cn(
+                    "w-full justify-start",
+                    isCollapsed && !isMobileOpen && "md:justify-center md:px-2",
+                    activeTab === item.id
+                      ? "text-white"
+                      : "text-gray-900 hover:text-gray-900 hover:bg-gray-100"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {(!isCollapsed || isMobileOpen) && (
+                    <span className="ml-2">{item.label}</span>
+                  )}
+                </Button>
+              </Link>
             );
           })}
         </nav>

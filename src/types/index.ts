@@ -1,25 +1,29 @@
+type MessageOwner = "USER" | "MODEL";
+type ReportStatus = "PROCESSING" | "COMPLETED" | "FAILED";
+
 export interface Report {
   id: string;
-  name: string;
-  filename: string;
-  size: number;
-  type: string;
-  uploadDate: string;
-  status: 'processing' | 'ready' | 'error';
-  summary?: string;
+  title: string;
+  summary: string;
+  status: ReportStatus;
+}
+
+export interface IChat {
+  id: string;
+  title: string;
+  createdAt: string;
 }
 
 export interface ChatMessage {
   id: string;
-  content: string;
-  sender: 'user' | 'assistant';
-  timestamp: string;
-  reportId?: string;
+  message: string;
+  owner: MessageOwner;
+  createdAt: string;
 }
 
 export interface UploadProgress {
   progress: number;
-  status: 'uploading' | 'processing' | 'complete' | 'error';
+  status: "uploading" | "processing" | "complete" | "error";
   message?: string;
 }
 
